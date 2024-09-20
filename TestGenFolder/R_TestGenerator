@@ -1,0 +1,118 @@
+```{r setup, echo=FALSE}
+print("Script is starting...")
+# Load required library
+if (!require(exams)) {
+  install.packages("exams")
+  library(exams)
+}
+print("Exams library loaded successfully")
+
+# Define chapter number and course code
+chapter_num <- 1
+course_code <- "phys12"
+
+# Construct the base name
+base_name <- paste0("CH", chapter_num, "_", course_code)
+
+# List all .rmd files in the 01exercises folder
+exercise_files <- list.files(path = "~/NANMO-2024/Courses/Test Generator/01exercises", 
+                             pattern = "\\.rmd$", 
+                             full.names = FALSE)
+print(paste("Number of exercise files found:", length(exercise_files)))
+print(exercise_files)
+
+# Randomly shuffle the list of exercise files
+set.seed(123) # Set seed for reproducibility
+shuffled_01exercises <- sample(exercise_files)
+
+# Determine the number of questions for the quiz and test (with new limits)
+quiz_length <- min(20, floor(length(shuffled_01exercises) / 2))
+test_length <- min(30, length(shuffled_01exercises))
+
+# Create quiz and test question lists
+quiz_questions <- shuffled_01exercises[1:quiz_length]
+test_questions <- shuffled_01exercises[1:test_length]
+
+# Set output directories using base_name
+output_dir <- file.path("~/NANMO-2024/Courses/Test Generator", base_name)
+html_dir <- file.path(output_dir, "html")
+
+# Create directories if they don't exist
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+dir.create(html_dir, showWarnings = FALSE, recursive = TRUE)
+print(paste("Output directory created:", output_dir))
+print(paste("HTML directory created:", html_dir))
+
+# Generate the quiz
+tryCatch({
+  exams2qti21(
+    file = quiz_questions,
+    n = 1,
+    dir = output_dir,
+    name = paste0(base_name, "_quiz"),
+    edir = "~/NANMO-2024/Courses/Test Generator/01exercises",
+    verbose = TRUE,
+    resolution = 100,
+    points = rep(10, length(quiz_questions)),
+    maxattempts = 1,
+    navigation = "linear",
+    shufflesections = FALSE,
+    converter = "pandoc-mathjax"
+  )
+  print("Quiz generation completed")
+}, error = function(e) {
+  print(paste("Error in quiz generation:", e$message))
+})
+
+# Generate the test
+tryCatch({
+  exams2qti21(
+    file = test_questions,
+    n = 1,
+    dir = output_dir,
+    name = paste0(base_name, "_test"),
+    edir = "~/NANMO-2024/Courses/Test Generator/01exercises",
+    verbose = TRUE,
+    resolution = 100,
+    points = rep(10, length(test_questions)),
+    maxattempts = 1,
+    navigation = "linear",
+    shufflesections = FALSE,
+    converter = "pandoc-mathjax"
+  )
+  print("Test generation completed")
+}, error = function(e) {
+  print(paste("Error in test generation:", e$message))
+})
+
+# Generate HTML versions
+tryCatch({
+  exams2html(file = quiz_questions,
+             n = 1,
+             dir = html_dir,
+             name = paste0(base_name, "_quiz"),
+             edir = "~/NANMO-2024/Courses/Test Generator/01exercises",
+             converter = "pandoc-mathjax")
+  print("Quiz HTML generation completed")
+}, error = function(e) {
+  print(paste("Error in quiz HTML generation:", e$message))
+})
+
+tryCatch({
+  exams2html(file = test_questions,
+             n = 1,
+             dir = html_dir,
+             name = paste0(base_name, "_test"),
+             edir = "~/NANMO-2024/Courses/Test Generator/01exercises",
+             converter = "pandoc-mathjax")
+  print("Test HTML generation completed")
+}, error = function(e) {
+  print(paste("Error in test HTML generation:", e$message))
+})
+
+# Print confirmation message
+cat(paste0(base_name, " quiz and test generated successfully.\n",
+           "QTI files are in ", output_dir, "\n",
+           "HTML files are in ", html_dir))
+print("Script execution completed")
+```
